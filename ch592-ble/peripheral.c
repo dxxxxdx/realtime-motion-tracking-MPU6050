@@ -87,23 +87,23 @@ static uint8_t scanRspData[] = {
     // complete name
     0x12, // length of this data
     GAP_ADTYPE_LOCAL_NAME_COMPLETE,
-    'S',
-    'i',
-    'm',
-    'p',
-    'l',
-    'e',
+    'F',
+    'U',
+    'C',
+    'K',
     ' ',
-    'P',
-    'e',
-    'r',
-    'i',
-    'p',
-    'h',
-    'e',
-    'r',
-    'a',
-    'l',
+    'S',
+    'H',
+    'I',
+    'T',
+    ' ',
+    'B',
+    'L',
+    'E',
+    ' ',
+    ' ',
+    ' ',
+    ' ',
     // connection interval range
     0x05, // length of this data
     GAP_ADTYPE_SLAVE_CONN_INTERVAL_RANGE,
@@ -738,3 +738,17 @@ static void simpleProfileChangeCB(uint8_t paramID, uint8_t *pValue, uint16_t len
 
 /*********************************************************************
 *********************************************************************/
+
+
+/**
+ * @fn      Peripheral_GetConnHandle
+ *
+ * @brief   Return current connection handle (or GAP_CONNHANDLE_INIT when not connected)
+ *
+ * @return  current connection handle
+ */
+uint16_t Peripheral_GetConnHandle(void)
+{
+    return peripheralConnList.connHandle;
+}
+

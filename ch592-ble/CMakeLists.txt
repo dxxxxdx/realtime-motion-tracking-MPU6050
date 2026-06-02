@@ -10,9 +10,6 @@ set(CMAKE_SYSTEM_PROCESSOR riscv)
 set(CMAKE_TRY_COMPILE_TARGET_TYPE "STATIC_LIBRARY")
 
 # 你的 MounRiver 内部工具链路径
-
-#你懂的要么环境变量塞好要么改绝对路径
-
 set(TOOLCHAIN_PATH "D:/MounRiver_Studio2/resources/app/resources/win32/components/WCH/Toolchain/RISC-V Embedded GCC")
 
 if(CMAKE_HOST_WIN32)
@@ -34,7 +31,7 @@ set(CMAKE_SIZE         "${TOOLCHAIN_PATH}/bin/riscv-none-embed-size${EXE_SUFFIX}
 project(CH592_BLE_Project C CXX ASM)
 # 恢复 DEBUG 打印和芯片定义
 add_compile_definitions(
-        DEBUG=1          # 恢复所有的 PRINTF，找回那 6.7KB 代码
+        DEBUG=0        # 恢复所有的 PRINTF，找回那 6.7KB 代码
         CH592            # 确保 SDK 知道当前是 CH592 芯片
 )
 
@@ -75,6 +72,8 @@ file(GLOB SRC_ROOT                 "${CMAKE_CURRENT_SOURCE_DIR}/*.c")
 
 set(PROJECT_SOURCES
         ${SRC_APP} ${SRC_PROFILE} ${SRC_HAL} ${SRC_DRIVER} ${SRC_STARTUP} ${SRC_RVMSIS} ${SRC_ROOT}
+        dataTask.c
+        dataTask.h
 )
 
 add_executable(${PROJECT_NAME} ${PROJECT_SOURCES})

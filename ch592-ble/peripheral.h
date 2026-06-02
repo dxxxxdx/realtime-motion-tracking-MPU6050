@@ -57,6 +57,11 @@ extern void Peripheral_Init(void);
  */
 extern uint16_t Peripheral_ProcessEvent(uint8_t task_id, uint16_t events);
 
+/*
+ * Get current connection handle (GAP connection handle) or GAP_CONNHANDLE_INIT if not connected
+ */
+extern uint16_t Peripheral_GetConnHandle(void);
+
 /*********************************************************************
 *********************************************************************/
 

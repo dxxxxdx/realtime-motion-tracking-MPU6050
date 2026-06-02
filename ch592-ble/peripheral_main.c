@@ -13,6 +13,7 @@
 /******************************************************************************/
 /* 头文件包含 */
 #include "CONFIG.h"
+#include "dataTask.h"
 #include "HAL.h"
 #include "gattprofile.h"
 #include "peripheral.h"
@@ -43,6 +44,14 @@ void Main_Circulation()
     }
 }
 
+dataTask_FSM test;
+dataTask_FSM test2;
+
+uint8_t test1data[16] ="helloworld";
+uint8_t test2data[16] ="fuckshit ch592";
+
+
+
 /*********************************************************************
  * @fn      main
  *
@@ -61,15 +70,21 @@ int main(void)
     GPIOB_ModeCfg(GPIO_Pin_All, GPIO_ModeIN_PU);
 #endif
 #ifdef DEBUG
-    GPIOA_SetBits(bTXD1);
-    GPIOA_ModeCfg(bTXD1, GPIO_ModeOut_PP_5mA);
-    UART1_DefInit();
+
+    GPIOB_SetBits(bTXD0);
+    GPIOB_ModeCfg(bTXD0, GPIO_ModeOut_PP_5mA);
+    UART0_DefInit();
+
 #endif
-    PRINT("%s\n", VER_LIB);
     CH59x_BLEInit();
     HAL_Init();
     GAPRole_PeripheralInit();
     Peripheral_Init();
+    /* Use SIMPLEPROFILE_CHAR4 (notify-capable) so phone can receive pushed notifications */
+    dataTask_init(&test, 0x0004, SIMPLEPROFILE_CHAR4,test1data);
+    dataTask_init(&test2, 0x0002, SIMPLEPROFILE_CHAR5,test2data);
+    dataTask_start(&test);
+    dataTask_start(&test2);
     Main_Circulation();
 }
 
