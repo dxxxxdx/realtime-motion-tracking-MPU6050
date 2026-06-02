@@ -36,7 +36,8 @@ enable_language(C ASM)
 
 # Create an executable object type
 add_executable(${CMAKE_PROJECT_NAME}
-        Core/Src/MPU6050.c)
+        Core/Src/MPU6050.c
+        ../ch592-ble/dataTask.h)
 
 # Add STM32CubeMX generated sources
 add_subdirectory(cmake/stm32cubemx)
