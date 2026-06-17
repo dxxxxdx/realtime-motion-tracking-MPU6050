@@ -4,74 +4,70 @@
 #ifndef CH572_BLE_PROJECT_I2C_HW_H
 #define CH572_BLE_PROJECT_I2C_HW_H
 #include "CH57x_common.h"
-#include "I2CCtrl.h"
+#include "I2CCtrl.h" // 里面保留你的 I2C_Operation 结构体即可
 
-// 定义引脚，方便后期修改
+// 霸道总裁宏：不管开什么优化，少废话，给我直接把代码拍在调用处！
+#define FORCE_INLINE __attribute__((always_inline)) static inline
+
+// 定义引脚
 #define I2C_SCL_PIN  (1 << 10)  // PA10
-#define I2C_SDA_PIN  (1 << 7)  // PA7
+#define I2C_SDA_PIN  (1 << 7)   // PA7
 
-/* ================== 1. 寄存器级极限抖动函数 ================== */
+/* ================== 1. 寄存器级极限内联抖动函数 ================== */
 
-static void CH572_SCL_Change(uint8_t status)
+FORCE_INLINE void CH572_SCL_Change(uint8_t status)
 {
-    if(status == I2C_HIZ)
-    {
-        R32_PA_DIR &= ~I2C_SCL_PIN; // 切为输入（靠上拉变高电平）
-    }
-    else
-    {
-        R32_PA_DIR |= I2C_SCL_PIN;  // 切为输出（OUT恒为0，拉低电平）
+    if(status == I2C_HIZ) {
+        R32_PA_DIR &= ~I2C_SCL_PIN;
+    } else {
+        R32_PA_DIR |= I2C_SCL_PIN;
     }
 }
 
-static void CH572_SDA_Change(uint8_t status)
+FORCE_INLINE void CH572_SDA_Change(uint8_t status)
 {
-    if(status == I2C_HIZ)
-    {
-        R32_PA_DIR &= ~I2C_SDA_PIN; // 切为输入（靠上拉变高电平，放手）
-    }
-    else
-    {
-        R32_PA_DIR |= I2C_SDA_PIN;  // 切为输出（拉低电平）
+    if(status == I2C_HIZ) {
+        R32_PA_DIR &= ~I2C_SDA_PIN;
+    } else {
+        R32_PA_DIR |= I2C_SDA_PIN;
     }
 }
 
-static uint8_t CH572_SDA_Read(void)
+FORCE_INLINE uint8_t CH572_SDA_Read(void)
 {
-    // 直接读取 PA 端口的 PIN 寄存器状态
-    // 如果 SDA 引脚当前是高电平，返回 1；如果是低电平，返回 0
     return (R32_PA_PIN & I2C_SDA_PIN) ? 1 : 0;
 }
 
-static void CH572_I2C_Delay(void)
+/* ================== 2. RISC-V 绝对确定性汇编延时 ================== */
+
+FORCE_INLINE void CH572_I2C_Delay(void)
 {
-    // 400kHz 半周期约 1.25us
-    // CH572 如果主频是 32MHz，大约循环十几下即可。具体需要你上机微调。
-    volatile uint8_t i = 12;
-    while(i--);
+    // RISC-V 极简汇编死循环，彻底剥夺编译器自作聪明的权利。
+    // 算法：
+    // addi 减1 (1个时钟周期)
+    // bnez 判断不为0则跳转 (沁恒 QingKe 内核跳转通常需要 2 个周期)
+    // 所以每循环一次精确消耗约 3 个 CPU 周期。
+
+    // 如果主频 60MHz -> 1微秒=60周期 -> 1.25us=75周期。 75 / 3 = 25。
+    // 如果主频 32MHz -> 1微秒=32周期 -> 1.25us=40周期。 40 / 3 ≈ 13。
+    // 请根据你的实际主频修改下面这个值！
+    uint32_t count = 25;
+
+    __asm__ __volatile__(
+        "1:\n\t"                  // 局部标签 1
+        "addi %0, %0, -1\n\t"     // count = count - 1
+        "bnez %0, 1b\n\t"         // 如果 count != 0，跳回标签 1
+        : "+r" (count)            // 输出和输入约束：让编译器随便挑一个通用寄存器来存 count
+    );
 }
 
-/* ================== 2. 实例化你的控制器 ================== */
+/* ================== 3. 硬件初始化 ================== */
 
-I2CIO mpu6050_io = {
-    .SDAChange = CH572_SDA_Change,
-    .SCLChange = CH572_SCL_Change,
-    .SDAREAD   = CH572_SDA_Read,
-    .I2CDelay  = CH572_I2C_Delay
-};
-
-/* ================== 3. 硬件初始化 (极其关键) ================== */
-
-void CH572_I2C_HW_Init(void)
+FORCE_INLINE void CH572_I2C_HW_Init(void)
 {
-    // 1. 开启内部上拉
     R32_PA_PU |= (I2C_SCL_PIN | I2C_SDA_PIN);
-
-    // 2. 将数据输出寄存器 永远 设为 0
-    R32_PA_CLR |= (I2C_SCL_PIN | I2C_SDA_PIN); // 或者 R32_PA_OUT &= ~(...)
-
-    // 3. 初始状态为总线空闲：把方向全设为输入，让上拉电阻把总线拉高 (HIZ状态)
+    R32_PA_CLR |= (I2C_SCL_PIN | I2C_SDA_PIN);
     R32_PA_DIR &= ~(I2C_SCL_PIN | I2C_SDA_PIN);
 }
 
-#endif
+#endif //CH572_BLE_PROJECT_I2C_HW_H
