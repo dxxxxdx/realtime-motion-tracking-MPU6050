@@ -80,6 +80,11 @@ file(GLOB SRC_ROOT                 "${CMAKE_CURRENT_SOURCE_DIR}/*.c")
 
 set(PROJECT_SOURCES
         ${SRC_APP} ${SRC_PROFILE} ${SRC_HAL} ${SRC_DRIVER} ${SRC_STARTUP} ${SRC_ROOT}
+        MPU6050.c
+        MPU6050.h
+        dataTask.h
+        ../I2CCtrl.c
+        ../I2CCtrl.h
 )
 
 add_executable(${PROJECT_NAME} ${PROJECT_SOURCES})
