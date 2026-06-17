@@ -83,8 +83,9 @@ set(PROJECT_SOURCES
         MPU6050.c
         MPU6050.h
         dataTask.h
-        ../I2CCtrl.c
-        ../I2CCtrl.h
+        I2CCtrl.c
+        I2CCtrl.h
+        I2C_HW.h
 )
 
 add_executable(${PROJECT_NAME} ${PROJECT_SOURCES})

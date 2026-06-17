@@ -35,7 +35,7 @@ typedef struct MPU6050 {
     uint8_t action ;
     uint8_t (*readI2C)(uint8_t internalReg,uint8_t *data,uint8_t lenInBytes);
     uint8_t (*writeI2C)(uint8_t internalReg,uint8_t *data,uint8_t lenInBytes);
-    void(*I2CFinishCallBack)(struct MPU6050* self);
+    void(*I2CFinishCallBack)(struct MPU6050* self);//给dma用的
     void(*OnBusy)(struct MPU6050* self);
 }MPU6050;
 
