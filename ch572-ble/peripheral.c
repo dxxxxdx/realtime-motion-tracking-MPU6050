@@ -48,8 +48,8 @@
 // Minimum connection interval (units of 1.25ms, 6=7.5ms)
 #define DEFAULT_DESIRED_MIN_CONN_INTERVAL    6
 
-// Maximum connection interval (units of 1.25ms, 100=125ms)
-#define DEFAULT_DESIRED_MAX_CONN_INTERVAL    100
+// Maximum connection interval (units of 1.25ms, 100=125ms£¬12= 15ms)
+#define DEFAULT_DESIRED_MAX_CONN_INTERVAL    12
 
 // Slave latency to use parameter update
 #define DEFAULT_DESIRED_SLAVE_LATENCY        0
@@ -86,13 +86,13 @@ static uint8_t scanRspData[] = {
     // complete name
     0x12, // length of this data
     GAP_ADTYPE_LOCAL_NAME_COMPLETE,
-    'S',
-    'i',
-    'm',
-    'p',
-    'l',
-    'e',
-    ' ',
+    'M',
+    'P',
+    'U',
+    '6',
+    '0',
+    '5',
+    '0',
     'P',
     'e',
     'r',
@@ -136,7 +136,7 @@ static uint8_t advertData[] = {
 };
 
 // GAP GATT Attributes
-static uint8_t attDeviceName[GAP_DEVICE_NAME_LEN] = "Simple Peripheral";
+static uint8_t attDeviceName[GAP_DEVICE_NAME_LEN] = "ch572IMU";
 
 // Connection item list
 static peripheralConnItem_t peripheralConnList;
@@ -278,6 +278,11 @@ void Peripheral_Init()
 
     // Setup a delayed profile startup
     tmos_set_event(Peripheral_TaskID, SBP_START_DEVICE_EVT);
+}
+
+uint16_t Peripheral_GetConnHandle(void)
+{
+    return peripheralConnList.connHandle;
 }
 
 /*********************************************************************
@@ -664,8 +669,8 @@ static void peripheralStateNotificationCB(gapRole_States_t newState, gapRoleEven
  */
 static void performPeriodicTask(void)
 {
-    uint8_t notiData[SIMPLEPROFILE_CHAR4_LEN] = {0x88};
-    peripheralChar4Notify(notiData, SIMPLEPROFILE_CHAR4_LEN);
+    // uint8_t notiData[SIMPLEPROFILE_CHAR4_LEN] = {0x88};
+    // peripheralChar4Notify(notiData, SIMPLEPROFILE_CHAR4_LEN);
 }
 
 /*********************************************************************

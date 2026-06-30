@@ -10,7 +10,7 @@
 
 // 【OOP 多实例花名册】：支持最多创建 3 个独立的数据任务实例
 #define MAX_INSTANCES 3
-static dataTask_FSM* s_taskRegistry[MAX_INSTANCES] = {NULL};
+static dataTask_FSM* s_taskRegistry[MAX_INSTANCES] = {nullptr};
 
 static void dataTask_main(dataTask_FSM* self);
 
@@ -101,6 +101,7 @@ uint16_t dataTask_ProcessEvent(uint8_t task_id, uint16_t events)
         if (self->taskEnabled)
         {
             dataTask_main(self); // 大家都调用这个函数，但传进去的 self 是各自独立的！
+            //准备下一次干活
             tmos_start_task(self->taskID, self->TMOS_Bitmask, 10*DATATASK_PERIOD_TICKS);
         }
         return (events ^ self->TMOS_Bitmask);
@@ -120,12 +121,13 @@ static void dataTask_main(dataTask_FSM* self)
     if (self == NULL) return;
     self->packetCount++;
 
+
+
     SimpleProfile_SetParameter(self->gattCharID, 16, self->pdata);
 
 
+
     //ai写的能跑就别动,其他通道是很简单的
-
-
     if (self->gattCharID == SIMPLEPROFILE_CHAR4)
     {
         uint16_t conn = Peripheral_GetConnHandle();
@@ -147,5 +149,6 @@ static void dataTask_main(dataTask_FSM* self)
             }
         }
     }
+
 
 }

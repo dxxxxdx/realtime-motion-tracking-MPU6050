@@ -52,6 +52,8 @@ typedef struct
  */
 extern void Peripheral_Init(void);
 
+extern uint16_t Peripheral_GetConnHandle(void);
+
 /*
  * Task Event Processor for the BLE Application
  */

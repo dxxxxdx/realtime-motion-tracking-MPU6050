@@ -16,6 +16,7 @@
 #include "HAL.h"
 #include "gattprofile.h"
 #include "peripheral.h"
+#include "dataTxTask.h"
 
 /*********************************************************************
  * GLOBAL TYPEDEFS
@@ -25,6 +26,9 @@ __attribute__((aligned(4))) uint32_t MEM_BUF[BLE_MEMHEAP_SIZE / 4];
 #if(defined(BLE_MAC)) && (BLE_MAC == TRUE)
 const uint8_t MacAddr[6] = {0x84, 0xC2, 0xE4, 0x03, 0x02, 0x02};
 #endif
+
+static dataTxTask g_dataTxTask;
+static uint8_t g_dataTxPayload[SIMPLEPROFILE_CHAR4_LEN] = "\x00testhelloworld\0" ;
 
 /*********************************************************************
  * @fn      Main_Circulation
@@ -54,7 +58,7 @@ int main(void)
 {
     // 关闭两线调试
     R16_PIN_ALTERNATE &= ~RB_PIN_DEBUG_EN;
-    HSECFG_Capacitance(HSECap_18p);
+    HSECFG_Capacitance(HSECap_12p);
     SetSysClock(CLK_SOURCE_HSE_PLL_100MHz);
 #if(defined(HAL_SLEEP)) && (HAL_SLEEP == TRUE)
     GPIOA_ModeCfg(GPIO_Pin_All, GPIO_ModeIN_PU);
@@ -70,6 +74,10 @@ int main(void)
     HAL_Init();
     GAPRole_PeripheralInit();
     Peripheral_Init();
+    dataTxTask_init(&g_dataTxTask, DATATX_TASK_EVT, g_dataTxPayload,
+        sizeof(g_dataTxPayload), DATATX_DEFAULT_MS,SIMPLEPROFILE_CHAR4);
+    dataTxTask_start(&g_dataTxTask);
+
     Main_Circulation();
 }
 

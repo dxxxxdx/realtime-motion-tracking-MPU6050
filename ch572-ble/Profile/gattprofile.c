@@ -110,7 +110,7 @@ static uint8_t simpleProfileChar3UserDesp[] = "Characteristic 3\0";
 static uint8_t simpleProfileChar4Props = GATT_PROP_NOTIFY;
 
 // Characteristic 4 Value
-static uint8_t simpleProfileChar4[1] = {0};
+static uint8_t simpleProfileChar4[SIMPLEPROFILE_CHAR4_LEN] = {0};
 
 // Simple Profile Characteristic 4 Configuration Each client has its own
 // instantiation of the Client Characteristic Configuration. Reads of the
@@ -119,7 +119,7 @@ static uint8_t simpleProfileChar4[1] = {0};
 static gattCharCfg_t simpleProfileChar4Config[1];
 
 // Simple Profile Characteristic 4 User Description
-static uint8_t simpleProfileChar4UserDesp[] = "Characteristic 4\0";
+static uint8_t simpleProfileChar4UserDesp[] = "MPU6050data\0";
 
 // Simple Profile Characteristic 5 Properties
 static uint8_t simpleProfileChar5Props = GATT_PROP_READ;

@@ -86,6 +86,7 @@ set(PROJECT_SOURCES
         I2CCtrl.c
         I2CCtrl.h
         I2C_HW.h
+        dataTxTask.h
 )
 
 add_executable(${PROJECT_NAME} ${PROJECT_SOURCES})

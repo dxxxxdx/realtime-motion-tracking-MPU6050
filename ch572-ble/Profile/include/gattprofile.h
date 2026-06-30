@@ -49,7 +49,7 @@ extern "C" {
 #define SIMPLEPROFILE_CHAR1_LEN     1
 #define SIMPLEPROFILE_CHAR2_LEN     1
 #define SIMPLEPROFILE_CHAR3_LEN     1
-#define SIMPLEPROFILE_CHAR4_LEN     1
+#define SIMPLEPROFILE_CHAR4_LEN     16
 #define SIMPLEPROFILE_CHAR5_LEN     5
 
 /*********************************************************************
