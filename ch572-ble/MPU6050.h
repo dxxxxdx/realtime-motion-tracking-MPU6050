@@ -6,6 +6,9 @@
 #define REALTIME_MOTION_TRACKING_MPU6050_MPU6050_H
 #include <stdint.h>
 
+#define MPU6050_DATA_REG 0x3b
+#define MPU6050_DATA_LEN 14
+
 typedef enum {
     MPU6050_IDLE = 0,
     MPU6050_I2CBUSY,
@@ -47,51 +50,75 @@ typedef enum {
 }
 MPU6050_RET;
 
-__attribute__((weak)) void MPU6050_Callback(MPU6050* self) {
-
-}
+__attribute__((weak)) void MPU6050_Callback(MPU6050* self);
 static void I2CDefaultFinishCallBack(MPU6050* self) {
     self->Stage = MPU6050_IDLE;
     self->action = MPU6050_NOTHINGTODO;
     MPU6050_Callback(self);
 };
 
-static MPU6050_RET MPU6050_Read_Data(MPU6050* self, ACCELERATION_DATA_t* data) {
-    if (self->Stage == MPU6050_I2CBUSY) {self->OnBusy(self); return MPU6050_BUSY;}
-    self->Stage = MPU6050_I2CBUSY;
-    self->readI2C(0x3b, (uint8_t*)data,14);
-    return MPU6050_OK;
-}
-
-static MPU6050_RET MPU6050_Write_Data(MPU6050* self, uint8_t internalReg, uint8_t* data,uint8_t lenInBytes) {
-    if (self->Stage == MPU6050_BUSY) {self->OnBusy(self); return MPU6050_BUSY;}
-    self->Stage = MPU6050_I2CBUSY;
-    self->writeI2C(internalReg,(uint8_t*)data,lenInBytes);
-    return MPU6050_OK;
-}
-
-
-static MPU6050_RET MPU6050_Init(MPU6050* self,uint8_t I2Cadr7Bit,
-                uint8_t(*readI2C)(uint8_t internalReg,uint8_t *data,uint8_t lenInBytes),
-                uint8_t(*writeI2C)(uint8_t internalReg,uint8_t *data,uint8_t lenInBytes),
-                void(*OnBusy)(struct MPU6050* self))
+static MPU6050_RET MPU6050_Read_Data(MPU6050* self, ACCELERATION_DATA_t* data)
 {
-    self->I2Cadr = I2Cadr7Bit;
-    self->Stage = MPU6050_IDLE;
-    self->action = MPU6050_NOTHINGTODO;
-    self->readI2C = readI2C;
-    self->writeI2C = writeI2C;
-    self->OnBusy = OnBusy;
-    return MPU6050_Write_Data(self,0x6b, (uint8_t[]){0x01},1);
+    uint8_t ret;
+    if(self->Stage == MPU6050_I2CBUSY)
+    {
+        self->OnBusy(self);
+        return MPU6050_BUSY;
+    }
+    self->Stage = MPU6050_I2CBUSY;
+    self->action = MPU6050_READDATA;
+    ret = self->readI2C(MPU6050_DATA_REG, (uint8_t*)data, MPU6050_DATA_LEN);
+    if(ret != 0)
+    {
+        self->Stage = MPU6050_ERROR_STAGE;
+        self->action = MPU6050_NOTHINGTODO;
+        return MPU6050_ERROR;
+    }
+        self->I2CFinishCallBack(self);
+    return MPU6050_OK;
+}
+
+static MPU6050_RET MPU6050_Write_Data(MPU6050* self, uint8_t internalReg, uint8_t* data,uint8_t lenInBytes)
+{
+    uint8_t ret;
+    if(self->Stage == MPU6050_I2CBUSY)
+    {
+        self->OnBusy(self);
+        return MPU6050_BUSY;
+    }
+
+    self->Stage = MPU6050_I2CBUSY;
+    self->action = MPU6050_WRITEDATA;
+    ret = self->writeI2C(internalReg, data, lenInBytes);
+    if(ret != 0)
+    {
+        self->Stage = MPU6050_ERROR_STAGE;
+        self->action = MPU6050_NOTHINGTODO;
+        return MPU6050_ERROR;
+    }
+        self->I2CFinishCallBack(self);
+    return MPU6050_OK;
 }
 
 
+// static MPU6050_RET MPU6050_Init(MPU6050* self,uint8_t I2Cadr7Bit,
+//                 uint8_t(*readI2C)(uint8_t internalReg,uint8_t *data,uint8_t lenInBytes),
+//                 uint8_t(*writeI2C)(uint8_t internalReg,uint8_t *data,uint8_t lenInBytes),
+//                 void(*OnBusy)(struct MPU6050* self))
+// {
+//     self->I2Cadr = I2Cadr7Bit;
+//     self->Stage = MPU6050_IDLE;
+//     self->action = MPU6050_NOTHINGTODO;
+//     self->readI2C = readI2C;
+//     self->writeI2C = writeI2C;
+//     self->OnBusy = OnBusy;
+//     return MPU6050_Write_Data(self,0x6b, (uint8_t[]){0x01},1);
+// }
 
-MPU6050_RET STM32_MPU6050_Binding(MPU6050* self, uint8_t I2Cadr7Bit) ;
 
 
-
-
+MPU6050_RET MPU6050_Init(MPU6050* self);
+extern MPU6050 g_mpu;
 
 
 

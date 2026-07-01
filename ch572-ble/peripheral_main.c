@@ -13,10 +13,13 @@
 /******************************************************************************/
 /* 头文件包含 */
 #include "CONFIG.h"
+#include "dataCollectTask.h"
 #include "HAL.h"
 #include "gattprofile.h"
 #include "peripheral.h"
 #include "dataTxTask.h"
+#include "I2C_HW.h"
+#include "MPU6050.h"
 
 /*********************************************************************
  * GLOBAL TYPEDEFS
@@ -27,8 +30,14 @@ __attribute__((aligned(4))) uint32_t MEM_BUF[BLE_MEMHEAP_SIZE / 4];
 const uint8_t MacAddr[6] = {0x84, 0xC2, 0xE4, 0x03, 0x02, 0x02};
 #endif
 
+
+
+
+
 static dataTxTask g_dataTxTask;
-static uint8_t g_dataTxPayload[SIMPLEPROFILE_CHAR4_LEN] = "\x00testhelloworld\0" ;
+
+
+
 
 /*********************************************************************
  * @fn      Main_Circulation
@@ -70,13 +79,19 @@ int main(void)
     UART_DefInit();
 #endif
     PRINT("%s\n", VER_LIB);
+    GPIOA_ModeCfg(bKEY4,GPIO_ModeOut_PP_5mA);
+    GPIOA_SetBits(GPIO_Pin_11);
     CH57x_BLEInit();
     HAL_Init();
     GAPRole_PeripheralInit();
     Peripheral_Init();
-    dataTxTask_init(&g_dataTxTask, DATATX_TASK_EVT, g_dataTxPayload,
-        sizeof(g_dataTxPayload), DATATX_DEFAULT_MS,SIMPLEPROFILE_CHAR4);
+    dataTxTask_init(&g_dataTxTask, DATATX_TASK_EVT, g_dataCollectPayload,
+        sizeof(g_dataCollectPayload), DATATX_DEFAULT_MS,SIMPLEPROFILE_CHAR4);
     dataTxTask_start(&g_dataTxTask);
+    uint8_t status =  MPU6050_Init(&g_mpu);
+    PRINT("MPU:%d",status);
+    dataCollectTask_init(&g_dataCollectTask);
+    dataCollectTask_start(&g_dataCollectTask);
 
     Main_Circulation();
 }

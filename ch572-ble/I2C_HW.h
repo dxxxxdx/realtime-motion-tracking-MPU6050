@@ -51,7 +51,7 @@ FORCE_INLINE void CH572_I2C_Delay(void)
     // 如果主频 60MHz -> 1微秒=60周期 -> 1.25us=75周期。 75 / 3 = 25。
     // 如果主频 32MHz -> 1微秒=32周期 -> 1.25us=40周期。 40 / 3 ≈ 13。
     // 请根据你的实际主频修改下面这个值！
-    uint32_t volatile count = 25;
+    uint32_t volatile count = 18;
 
     __asm__ __volatile__(
         "1:\n\t"                  // 局部标签 1

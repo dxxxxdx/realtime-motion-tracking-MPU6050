@@ -27,7 +27,7 @@ typedef struct I2CCtrl
     void(*SDAChange)(uint8_t status);
     void(*SCLChange)(uint8_t status);
     void(*I2CDelay)(void); // 👈 400kHz 半周期延时 (~1.2us)
-    uint8_t(*SDAREAD)(void);
+    uint8_t(*SDARead)(void);
 } I2CIO;
 
 static uint8_t I2C_Process(I2CIO* io, I2C_Operation* operation)
@@ -58,7 +58,7 @@ static uint8_t I2C_Process(I2CIO* io, I2C_Operation* operation)
     io->I2CDelay();
     io->SCLChange(I2C_HIZ);
     io->I2CDelay();
-    if(io->SDAREAD()) ack_errors++; // 如果读到1，说明从机没理你，累加错误
+    if(io->SDARead()) ack_errors++; // 如果读到1，说明从机没理你，累加错误
     io->SCLChange(I2C_PD);
     io->I2CDelay();
 
@@ -77,7 +77,7 @@ static uint8_t I2C_Process(I2CIO* io, I2C_Operation* operation)
     io->I2CDelay();
     io->SCLChange(I2C_HIZ);
     io->I2CDelay();
-    if(io->SDAREAD()) ack_errors++;
+    if(io->SDARead()) ack_errors++;
     io->SCLChange(I2C_PD);
     io->I2CDelay();
 
@@ -108,7 +108,7 @@ static uint8_t I2C_Process(I2CIO* io, I2C_Operation* operation)
         io->I2CDelay();
         io->SCLChange(I2C_HIZ);
         io->I2CDelay();
-        if(io->SDAREAD()) ack_errors++;
+        if(io->SDARead()) ack_errors++;
         io->SCLChange(I2C_PD);
         io->I2CDelay();
 
@@ -123,7 +123,7 @@ static uint8_t I2C_Process(I2CIO* io, I2C_Operation* operation)
                 io->I2CDelay();
                 io->SCLChange(I2C_HIZ);
                 io->I2CDelay();
-                if(io->SDAREAD())
+                if(io->SDARead())
                 {
                     received_byte |= (1 << i);
                 }
@@ -160,7 +160,7 @@ static uint8_t I2C_Process(I2CIO* io, I2C_Operation* operation)
             io->I2CDelay();
             io->SCLChange(I2C_HIZ);
             io->I2CDelay();
-            if(io->SDAREAD()) ack_errors++;
+            if(io->SDARead()) ack_errors++;
             io->SCLChange(I2C_PD);
             io->I2CDelay();
         }

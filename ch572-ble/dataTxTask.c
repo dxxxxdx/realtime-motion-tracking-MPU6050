@@ -6,7 +6,7 @@
 
 #define MS_TO_TICKS(ms)    ((ms) * 8 / 5)
 
-static dataTxTask *s_dataTxTask = NULL;
+static dataTxTask *s_dataTxTask = nullptr;
 
 static void dataTxTask_notifyChar4(uint8_t *payload, uint8_t payloadLen)
 {
@@ -49,10 +49,6 @@ static void dataTxTask_notifyChar4(uint8_t *payload, uint8_t payloadLen)
 static void dataTxTask_send(dataTxTask *self)
 {
     uint8_t sendLen;
-    //TODO:测试用别忘删了
-    if (self->payload != NULL){self->payload[0] ++;}
-
-
 
     if(self == NULL || self->payload == NULL || self->payloadLen == 0)
     {
