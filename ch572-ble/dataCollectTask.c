@@ -37,22 +37,48 @@ static uint8_t dataCollectTask_parity(uint8_t *data, uint8_t len)
     return parity;
 }
 
-static void dataCollectTask_collect(dataCollectTask *self)
+static uint8_t MPU6050Packet_parity(MPU6050Packet *packet)
+{
+    return dataCollectTask_parity((uint8_t *)packet, DATACOLLECT_PACKET_LEN - 1);
+}
+
+static void MPU6050Packet_fill(MPU6050Packet *packet, ACCELERATION_DATA_t *data, uint8_t counter)
+{
+    tmos_memcpy(packet->data, data, MPU6050_DATA_LEN);
+    packet->counter = counter;
+    packet->parity = MPU6050Packet_parity(packet);
+}
+
+static MPU6050_RET MPU6050tick(dataCollectTask *self)
 {
     ACCELERATION_DATA_t data;
+    MPU6050Packet *packet;
+    MPU6050_RET ret;
 
     if(self == nullptr || self->sensor == nullptr || self->payload == nullptr)
     {
+        return MPU6050_ERROR;
+    }
+
+    ret = MPU6050_Read_Data(self->sensor, &data);
+    if(ret != MPU6050_OK)
+    {
+        return ret;
+    }
+
+    packet = (MPU6050Packet *)self->payload;
+    MPU6050Packet_fill(packet, &data, (uint8_t)++self->sampleCount);
+
+    return MPU6050_OK;
+}
+
+static void dataCollectTask_collect(dataCollectTask *self)
+{
+    if(MPU6050tick(self) == MPU6050_OK)
+    {
         return;
     }
 
-    if(MPU6050_Read_Data(self->sensor, &data) == MPU6050_OK)
-    {
-        tmos_memcpy(self->payload, &data, MPU6050_DATA_LEN);
-        self->payload[14] = (uint8_t)++self->sampleCount;
-        self->payload[15] = dataCollectTask_parity(self->payload, 15);
-        return;
-    }
     PRINT("READERR");
     self->errorCount++;
 }

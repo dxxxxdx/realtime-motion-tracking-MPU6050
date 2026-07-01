@@ -11,6 +11,13 @@
 #define DATACOLLECT_DEFAULT_MS      20
 #define DATACOLLECT_PACKET_LEN      16
 
+typedef struct
+{
+    uint8_t data[MPU6050_DATA_LEN];
+    uint8_t counter;
+    uint8_t parity;
+} MPU6050Packet;
+
 
 //懒癌犯了，其他外设改void*指针，要么自己重写
 
