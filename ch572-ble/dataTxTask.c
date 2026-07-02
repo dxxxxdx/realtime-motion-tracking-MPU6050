@@ -81,7 +81,7 @@ uint8_t dataTxTask_init(dataTxTask *self, uint16_t event, uint8_t *payload,
 
     tmos_memset(self, 0, sizeof(dataTxTask));
     self->event = event;
-    self->periodTicks = MS_TO_TICKS(periodMs ? periodMs : DATATX_DEFAULT_MS);
+    self->periodTicks = MS_TO_TICKS(periodMs);
     self->gattCharID = channel;
     self->payload = payload;
     self->payloadLen = payloadLen;

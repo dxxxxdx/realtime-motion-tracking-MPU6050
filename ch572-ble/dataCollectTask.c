@@ -68,6 +68,7 @@ static MPU6050_RET MPU6050tick(dataCollectTask *self)
 
     packet = (MPU6050Packet *)self->payload;
     MPU6050Packet_fill(packet, &data, (uint8_t)++self->sampleCount);
+    //PRINT("MPUDONE");
 
     return MPU6050_OK;
 }
@@ -93,7 +94,6 @@ uint8_t dataCollectTask_init(dataCollectTask *self )
     self->sampleCount = 0;
     self->errorCount = 0;
     self->taskID = TMOS_ProcessEventRegister(dataCollectTask_ProcessEvent);
-    s_dataCollectTask = self;
     return 1;
 }
 

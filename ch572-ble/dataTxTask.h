@@ -4,7 +4,7 @@
 #include <stdint.h>
 
 #define DATATX_TASK_EVT        0x0001
-#define DATATX_DEFAULT_MS      20
+#define DATATX_DEFAULT_MS      15
 
 typedef struct
 {

@@ -7,8 +7,8 @@
 #include <stdint.h>
 #include "MPU6050.h"
 
-#define DATACOLLECT_TASK_EVT        0x0001
-#define DATACOLLECT_DEFAULT_MS      20
+#define DATACOLLECT_TASK_EVT        0x0002
+#define DATACOLLECT_DEFAULT_MS      36
 #define DATACOLLECT_PACKET_LEN      16
 
 typedef struct
