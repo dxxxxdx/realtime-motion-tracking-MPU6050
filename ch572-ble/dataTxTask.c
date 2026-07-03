@@ -14,12 +14,6 @@ static void dataTxTask_notifyChar4(uint8_t *payload, uint8_t payloadLen)
     attHandleValueNoti_t noti;
     uint8_t sendLen;
 
-
-    if(payload == NULL || payloadLen == 0)
-    {
-        return;
-    }
-
     sendLen = payloadLen;
     if(sendLen > SIMPLEPROFILE_CHAR4_LEN)
     {
@@ -27,18 +21,9 @@ static void dataTxTask_notifyChar4(uint8_t *payload, uint8_t payloadLen)
     }
 
     conn = Peripheral_GetConnHandle();
-    if(conn == GAP_CONNHANDLE_INIT)
-    {
-        return;
-    }
 
     noti.len = sendLen;
     noti.pValue = GATT_bm_alloc(conn, ATT_HANDLE_VALUE_NOTI, noti.len, NULL, 0);
-    if(noti.pValue == NULL)
-    {
-        return;
-    }
-
     tmos_memcpy(noti.pValue, payload, noti.len);
     if(simpleProfile_Notify(conn, &noti) != SUCCESS)
     {
@@ -49,11 +34,6 @@ static void dataTxTask_notifyChar4(uint8_t *payload, uint8_t payloadLen)
 static void dataTxTask_send(dataTxTask *self)
 {
     uint8_t sendLen;
-
-    if(self == NULL || self->payload == NULL || self->payloadLen == 0)
-    {
-        return;
-    }
 
     sendLen = self->payloadLen;
 
@@ -69,15 +49,6 @@ static void dataTxTask_send(dataTxTask *self)
 uint8_t dataTxTask_init(dataTxTask *self, uint16_t event, uint8_t *payload,
     uint8_t payloadLen, uint16_t periodMs,uint8_t channel)
 {
-    if(self == NULL || payload == NULL || payloadLen == 0)
-    {
-        return 0;
-    }
-
-    if(s_dataTxTask != NULL && s_dataTxTask != self)
-    {
-        return 0;
-    }
 
     tmos_memset(self, 0, sizeof(dataTxTask));
     self->event = event;
@@ -93,10 +64,6 @@ uint8_t dataTxTask_init(dataTxTask *self, uint16_t event, uint8_t *payload,
 
 void dataTxTask_start(dataTxTask *self)
 {
-    if(self == NULL)
-    {
-        return;
-    }
 
     self->enabled = 1;
     tmos_set_event(self->taskID, self->event);
@@ -104,10 +71,6 @@ void dataTxTask_start(dataTxTask *self)
 
 void dataTxTask_stop(dataTxTask *self)
 {
-    if(self == NULL)
-    {
-        return;
-    }
 
     self->enabled = 0;
     tmos_clear_event(self->taskID, self->event);
@@ -116,11 +79,6 @@ void dataTxTask_stop(dataTxTask *self)
 uint16_t dataTxTask_ProcessEvent(uint8_t task_id, uint16_t events)
 {
     dataTxTask *self = s_dataTxTask;
-
-    if(self == NULL || self->taskID != task_id)
-    {
-        return 0;
-    }
 
     if(events & SYS_EVENT_MSG)
     {

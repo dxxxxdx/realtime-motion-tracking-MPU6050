@@ -9,9 +9,7 @@
 
 /* ============================== Notes ================================= */
 
-//WARNING
-//这段强耦合了全局的g_i2cOP，容易血压飙升，虽然也不是很抽象
-//如果你需要拓展，建议多开几个载荷防止竞态
+
 
 /* ============================== Private Prototypes ==================== */
 
@@ -50,7 +48,11 @@ MPU6050 g_mpu = {
 };
 
 /* ============================== I2C Adapter =========================== */
-
+//WARNING//WARNING//WARNING//WARNING//WARNING//WARNING//WARNING//WARNING//WARNING
+//WARNING//WARNING//WARNING//WARNING//WARNING//WARNING//WARNING//WARNING//WARNING
+//这段强耦合了全局的g_i2cOP，容易让人血压飙升，虽然也不是很抽象
+//如果你需要拓展，建议多开几个载荷防止竞态
+//还有就是这载荷为了兼容性拷贝了一份..........
 static uint8_t MPU6050_I2C_Read(uint8_t internalReg, uint8_t *data, uint8_t lenInBytes)
 {
     g_i2cOP.TargetAddress7Plus1Bit = (uint8_t)((g_mpu.I2Cadr << 1) | 0x01);

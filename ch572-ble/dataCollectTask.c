@@ -52,24 +52,13 @@ static void MPU6050Packet_fill(MPU6050Packet *packet, ACCELERATION_DATA_t *data,
 static MPU6050_RET MPU6050tick(dataCollectTask *self)
 {
     ACCELERATION_DATA_t data;
-    MPU6050Packet *packet;
-    MPU6050_RET ret;
 
-    if(self == nullptr || self->sensor == nullptr || self->payload == nullptr)
+    if(MPU6050_Read_Data(self->sensor, &data) != MPU6050_OK)
     {
         return MPU6050_ERROR;
     }
-
-    ret = MPU6050_Read_Data(self->sensor, &data);
-    if(ret != MPU6050_OK)
-    {
-        return ret;
-    }
-
-    packet = (MPU6050Packet *)self->payload;
-    MPU6050Packet_fill(packet, &data, (uint8_t)++self->sampleCount);
+    MPU6050Packet_fill((MPU6050Packet *)self->payload, &data, (uint8_t)++self->sampleCount);
     //PRINT("MPUDONE");
-
     return MPU6050_OK;
 }
 
@@ -79,17 +68,12 @@ static void dataCollectTask_collect(dataCollectTask *self)
     {
         return;
     }
-
     PRINT("READERR");
     self->errorCount++;
 }
 
 uint8_t dataCollectTask_init(dataCollectTask *self )
 {
-    if(self->sensor == nullptr || self->payload == nullptr)
-    {
-        return 0;
-    }
     self->enabled = 0;
     self->sampleCount = 0;
     self->errorCount = 0;
@@ -99,26 +83,12 @@ uint8_t dataCollectTask_init(dataCollectTask *self )
 
 void dataCollectTask_start(dataCollectTask *self)
 {
-
-
-    if(self == nullptr)
-    {
-        return;
-    }
-
     self->enabled = 1;
     tmos_set_event(self->taskID, self->event);
 }
 
 void dataCollectTask_stop(dataCollectTask *self )
 {
-
-
-    if(self == nullptr)
-    {
-        return;
-    }
-
     self->enabled = 0;
     tmos_clear_event(self->taskID, self->event);
 }
@@ -126,11 +96,6 @@ void dataCollectTask_stop(dataCollectTask *self )
 uint16_t dataCollectTask_ProcessEvent(uint8_t task_id, uint16_t events)
 {
     dataCollectTask *self = s_dataCollectTask;
-
-    if(self == nullptr || self->taskID != task_id)
-    {
-        return 0;
-    }
 
     if(events & SYS_EVENT_MSG)
     {
