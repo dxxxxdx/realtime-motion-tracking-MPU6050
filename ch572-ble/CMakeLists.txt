@@ -129,4 +129,5 @@ add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
         COMMAND sh -c "\"${CMAKE_OBJDUMP}\" --source --all-headers --demangle -M xw --line-numbers --wide \"$<TARGET_FILE:${PROJECT_NAME}>\" > \"${PROJECT_NAME}.lst\""
         COMMAND ${CMAKE_SIZE} --format=berkeley $<TARGET_FILE:${PROJECT_NAME}>
         COMMENT "Generating HEX and LST files, and displaying memory usage..."
+        COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:${PROJECT_NAME}> "${CMAKE_CURRENT_SOURCE_DIR}/${PROJECT_NAME}.elf"
 )
