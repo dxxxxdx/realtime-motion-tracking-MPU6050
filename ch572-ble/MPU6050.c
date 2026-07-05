@@ -7,10 +7,6 @@
 
 #define MPU6050_DEFAULT_ADDR_7BIT 0x68
 
-/* ============================== Notes ================================= */
-
-
-
 /* ============================== Private Prototypes ==================== */
 
 static uint8_t MPU6050_I2C_Read(uint8_t internalReg, uint8_t *data, uint8_t lenInBytes);
@@ -21,21 +17,21 @@ static void MPU6050_OnBusy(MPU6050 *self);
 
 __attribute__((weak)) void MPU6050_Callback(MPU6050* self){}
 
-/* ============================== Static State ========================== */
+/* ============================== Driver State ========================== */
 
-static I2CIO g_mpu6050_i2cIO = {
+I2CIO g_mpu6050_i2cIO = {
     .SDAChange = CH572_SDA_Change,
     .SCLChange = CH572_SCL_Change,
     .I2CDelay = CH572_I2C_Delay,
     .SDARead = CH572_SDA_Read,
 };
 
-static I2C_Operation g_i2cOP;
+I2C_Operation g_i2cOP;
 
 uint8_t MPU6050ReadBuffer [32] ;
 uint8_t MPU6050WriteBuffer [32] ;
 
-/* ============================== Static Sensor Instance ================ */
+/* ============================== Default Sensor Instance =============== */
 
 MPU6050 g_mpu = {
     .I2Cadr = MPU6050_DEFAULT_ADDR_7BIT,
@@ -77,6 +73,59 @@ static uint8_t MPU6050_I2C_Write(uint8_t internalReg, uint8_t *data, uint8_t len
     return I2C_Process(&g_mpu6050_i2cIO, &g_i2cOP);
 }
 
+/* ============================== Data Access API ======================= */
+
+MPU6050_RET MPU6050_Read_Data(MPU6050* self, ACCELERATION_DATA_t* data)
+{
+    uint8_t ret;
+    if(self->Stage == MPU6050_I2CBUSY)
+    {
+        self->OnBusy(self);
+        return MPU6050_BUSY;
+    }
+    self->Stage = MPU6050_I2CBUSY;
+    self->action = MPU6050_READDATA;
+    ret = self->readI2C(MPU6050_DATA_REG, (uint8_t*)data, MPU6050_DATA_LEN);
+    if(ret != 0)
+    {
+        self->Stage = MPU6050_ERROR_STAGE;
+        self->action = MPU6050_NOTHINGTODO;
+        return MPU6050_ERROR;
+    }
+    self->I2CFinishCallBack(self);
+    return MPU6050_OK;
+}
+
+MPU6050_RET MPU6050_Write_Data(MPU6050* self, uint8_t internalReg, uint8_t* data,uint8_t lenInBytes)
+{
+    uint8_t ret;
+    if(self->Stage == MPU6050_I2CBUSY)
+    {
+        self->OnBusy(self);
+        return MPU6050_BUSY;
+    }
+
+    self->Stage = MPU6050_I2CBUSY;
+    self->action = MPU6050_WRITEDATA;
+    ret = self->writeI2C(internalReg, data, lenInBytes);
+    if(ret != 0)
+    {
+        self->Stage = MPU6050_ERROR_STAGE;
+        self->action = MPU6050_NOTHINGTODO;
+        return MPU6050_ERROR;
+    }
+    self->I2CFinishCallBack(self);
+    return MPU6050_OK;
+}
+
+/* ============================== Finish Callback ======================= */
+
+void I2CDefaultFinishCallBack(MPU6050* self) {
+    self->Stage = MPU6050_IDLE;
+    self->action = MPU6050_NOTHINGTODO;
+    MPU6050_Callback(self);
+};
+
 /* ============================== Busy Hook ============================= */
 
 static void MPU6050_OnBusy(MPU6050 *self)
@@ -91,4 +140,3 @@ MPU6050_RET MPU6050_Init(MPU6050* self)
     CH572_I2C_HW_Init();
     return MPU6050_Write_Data(self,0x6b, (uint8_t[]){0x01},1);
 }
-
