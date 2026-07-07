@@ -1,12 +1,24 @@
 #include "dataTxTask.h"
 #include "CH57x_common.h"
 #include "CH572BLEPeri_LIB.h"
+#include "dataCollectTask.h"
 #include "gattprofile.h"
 #include "peripheral.h"
 
 #define MS_TO_TICKS(ms)    ((ms) * 8 / 5)
 
-static dataTxTask *s_dataTxTask = nullptr;
+dataTxTask g_dataTxTask = {
+    .taskID = 0,
+    .enabled = 0,
+    .event = DATATX_TASK_EVT,
+    .periodTicks = MS_TO_TICKS(DATATX_DEFAULT_MS),
+    .packetCount = 0,
+    .gattCharID = SIMPLEPROFILE_CHAR4,
+    .payload = g_dataCollectPayload,
+    .payloadLen = DATACOLLECT_PACKET_LEN,
+};
+
+static dataTxTask *s_dataTxTask = &g_dataTxTask;
 
 static void dataTxTask_notifyChar4(uint8_t *payload, uint8_t payloadLen)
 {
@@ -46,18 +58,11 @@ static void dataTxTask_send(dataTxTask *self)
     SimpleProfile_SetParameter(self->gattCharID, sendLen, self->payload);
 }
 
-uint8_t dataTxTask_init(dataTxTask *self, uint16_t event, uint8_t *payload,
-    uint8_t payloadLen, uint16_t periodMs,uint8_t channel)
+uint8_t dataTxTask_init(dataTxTask *self)
 {
-
-    tmos_memset(self, 0, sizeof(dataTxTask));
-    self->event = event;
-    self->periodTicks = MS_TO_TICKS(periodMs);
-    self->gattCharID = channel;
-    self->payload = payload;
-    self->payloadLen = payloadLen;
+    self->enabled = 0;
+    self->packetCount = 0;
     self->taskID = TMOS_ProcessEventRegister(dataTxTask_ProcessEvent);
-
     s_dataTxTask = self;
     return 1;
 }

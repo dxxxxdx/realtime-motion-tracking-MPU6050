@@ -14,6 +14,7 @@
 /* 头文件包含 */
 #include "CONFIG.h"
 #include "dataCollectTask.h"
+#include "dataRxTask.h"
 #include "HAL.h"
 #include "gattprofile.h"
 #include "peripheral.h"
@@ -34,7 +35,6 @@ const uint8_t MacAddr[6] = {0x84, 0xC2, 0xE4, 0x03, 0x02, 0x02};
 
 
 
-static dataTxTask g_dataTxTask;
 
 
 
@@ -85,14 +85,14 @@ int main(void)
     HAL_Init();
     GAPRole_PeripheralInit();
     Peripheral_Init();
-    dataTxTask_init(&g_dataTxTask, DATATX_TASK_EVT, g_dataCollectPayload,
-        sizeof(g_dataCollectPayload), DATATX_DEFAULT_MS,SIMPLEPROFILE_CHAR4);
+    dataTxTask_init(&g_dataTxTask);
     dataTxTask_start(&g_dataTxTask);
     uint8_t status =  MPU6050_Init(&g_mpu);
     PRINT("MPU:%d",status);
     dataCollectTask_init(&g_dataCollectTask);
     dataCollectTask_start(&g_dataCollectTask);
-
+    dataRxTask_init(&g_dataRxTask);
+    dataRxTask_start(&g_dataRxTask);
     Main_Circulation();
 }
 

@@ -18,7 +18,9 @@ typedef struct
     uint8_t  payloadLen;
 } dataTxTask;
 
-uint8_t dataTxTask_init(dataTxTask *self, uint16_t event, uint8_t *payload, uint8_t payloadLen, uint16_t periodMs,uint8_t channel);
+extern dataTxTask g_dataTxTask;
+
+uint8_t dataTxTask_init(dataTxTask *self);
 void dataTxTask_start(dataTxTask *self);
 void dataTxTask_stop(dataTxTask *self);
 uint16_t dataTxTask_ProcessEvent(uint8_t task_id, uint16_t events);

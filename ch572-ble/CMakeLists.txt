@@ -87,6 +87,8 @@ set(PROJECT_SOURCES
         dataTxTask.h
         dataCollectTask.c
         dataCollectTask.h
+        dataRxTask.c
+        dataRxTask.h
 )
 
 add_executable(${PROJECT_NAME} ${PROJECT_SOURCES})
@@ -125,9 +127,21 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
 # 8. 后处理：自动生成 HEX、LST 并打印内存（【修正】给 sh -c 内部的命令加上了硬核防碎转义双引号）
 # =========================================================================
 add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+        # 1. 生成 hex 文件
         COMMAND ${CMAKE_OBJCOPY} -O ihex $<TARGET_FILE:${PROJECT_NAME}> ${PROJECT_NAME}.hex
+
+        # 2. 生成 lst 文件
         COMMAND sh -c "\"${CMAKE_OBJDUMP}\" --source --all-headers --demangle -M xw --line-numbers --wide \"$<TARGET_FILE:${PROJECT_NAME}>\" > \"${PROJECT_NAME}.lst\""
+
+        # 3. 显示内存大小
         COMMAND ${CMAKE_SIZE} --format=berkeley $<TARGET_FILE:${PROJECT_NAME}>
-        COMMENT "Generating HEX and LST files, and displaying memory usage..."
+
+        # 4. 拷贝 elf 文件到源码目录 (如果确实需要的话)
         COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:${PROJECT_NAME}> "${CMAKE_CURRENT_SOURCE_DIR}/${PROJECT_NAME}.elf"
+
+        # 5. 运行 eanaly 并明确指定传入当前生成的 ELF 文件路径
+        COMMAND ${EANALY_EXE} $<TARGET_FILE:${PROJECT_NAME}>
+
+        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+        COMMENT "Generating HEX/LST files, displaying memory usage, and running eanaly..."
 )
