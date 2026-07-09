@@ -1,19 +1,16 @@
 cmake_minimum_required(VERSION 3.15)
-
+set(CMAKE_C_STANDARD 99)
 # =========================================================================
-# 1. 交叉编译器工具链设置 (★必须放在 project() 之前)
+# 1. 工具链前置设置 (必须在 project() 之前)
 # =========================================================================
 set(CMAKE_SYSTEM_NAME Generic)
 set(CMAKE_SYSTEM_PROCESSOR riscv)
 
-# 告诉 CMake 检查编译器时不要尝试链接，只编译成静态库即可
+# 允许裸机编译时跳过标准的 CMake 编译器测试
 set(CMAKE_TRY_COMPILE_TARGET_TYPE "STATIC_LIBRARY")
 
-# MounRiver 内部工具链路径
+# MounRiver 编译器路径
 set(TOOLCHAIN_PATH "/home/dxxdx/公共/RISC-V Embedded GCC15")
-
-#这个自己改，我没啥说的
-
 
 if(CMAKE_HOST_WIN32)
     set(EXE_SUFFIX ".exe")
@@ -21,24 +18,25 @@ else()
     set(EXE_SUFFIX "")
 endif()
 
-# 核心编译器指针重定向
-set(CMAKE_C_COMPILER   "${TOOLCHAIN_PATH}/bin/riscv32-wch-elf-gcc${EXE_SUFFIX}")
-set(CMAKE_CXX_COMPILER "${TOOLCHAIN_PATH}/bin/riscv32-wch-elf-g++${EXE_SUFFIX}")
-set(CMAKE_ASM_COMPILER "${TOOLCHAIN_PATH}/bin/riscv32-wch-elf-gcc${EXE_SUFFIX}")
+# 工具链可执行文件定义
+set(CMAKE_C_COMPILER    "${TOOLCHAIN_PATH}/bin/riscv32-wch-elf-gcc${EXE_SUFFIX}")
+set(CMAKE_CXX_COMPILER  "${TOOLCHAIN_PATH}/bin/riscv32-wch-elf-g++${EXE_SUFFIX}")
+set(CMAKE_ASM_COMPILER  "${TOOLCHAIN_PATH}/bin/riscv32-wch-elf-gcc${EXE_SUFFIX}")
 set(CMAKE_OBJCOPY      "${TOOLCHAIN_PATH}/bin/riscv32-wch-elf-objcopy${EXE_SUFFIX}")
 set(CMAKE_OBJDUMP      "${TOOLCHAIN_PATH}/bin/riscv32-wch-elf-objdump${EXE_SUFFIX}")
 set(CMAKE_SIZE         "${TOOLCHAIN_PATH}/bin/riscv32-wch-elf-size${EXE_SUFFIX}")
 
-
-
-#傻逼wch，一会用none一会又用自己魔改的gcc，自己看情况选
+# 【核心修复】：显式覆盖内置的静态库打包工具为 GCC-LTO 专用的 ar / ranlib
+# 这样才能保证你在下面捞出来的 .a 静态库可以无缝参与 LTO 全局解构与去虚化
+set(CMAKE_AR           "${TOOLCHAIN_PATH}/bin/riscv32-wch-elf-gcc-ar${EXE_SUFFIX}" CACHE FILEPATH "LTO AR tool" FORCE)
+set(CMAKE_RANLIB       "${TOOLCHAIN_PATH}/bin/riscv32-wch-elf-gcc-ranlib${EXE_SUFFIX}" CACHE FILEPATH "LTO RANLIB tool" FORCE)
 
 # =========================================================================
-# 2. 初始化工程与芯片宏定义
+# 2. 项目声明
 # =========================================================================
 project(CH572_BLE_Project C CXX ASM)
 
-# 芯片级全局宏定义
+# 全局宏定义
 add_compile_definitions(
         DEBUG=1
         CH572
@@ -46,36 +44,37 @@ add_compile_definitions(
 )
 
 # =========================================================================
-# 3. 链接脚本位置
+# 3. 链接脚本路径
 # =========================================================================
 set(LINKER_SCRIPT "${CMAKE_CURRENT_SOURCE_DIR}/Ld/Link.ld")
 
 # =========================================================================
-# 4. 编译与链接参数
+# 4. 编译与链接标志（已注入极致优化与真·LTO）
 # =========================================================================
 set(ARCH_FLAGS "-march=rv32imc_zba_zbb_zbc_zbs_xw -mabi=ilp32 -mcmodel=medany -msmall-data-limit=8")
 
-# C 编译参数
-set(COMMON_C_FLAGS "${ARCH_FLAGS} -mno-save-restore -fmax-errors=20 -Os -fmessage-length=0 -fsigned-char -ffunction-sections -fdata-sections -fno-common --param=highcode-gen-section-name=1 -g")
+# 【优化开关】：升级为 -O3 并强势注入 -flto。同时保留 -g3 提供完整的符号追踪能力
+set(OPTIMIZATION_FLAGS "-Og -flto -g3")
+
+# C 编译标志
+set(COMMON_C_FLAGS "${ARCH_FLAGS} -mno-save-restore -fmax-errors=20 ${OPTIMIZATION_FLAGS} -fmessage-length=0 -fsigned-char -ffunction-sections -fdata-sections -fno-common --param=highcode-gen-section-name=1")
 set(CMAKE_C_FLAGS "${COMMON_C_FLAGS}" CACHE INTERNAL "c flags")
 
-# 汇编编译参数
+# 汇编编译标志
 set(CMAKE_ASM_FLAGS "${ARCH_FLAGS} -x assembler-with-cpp -g" CACHE INTERNAL "asm flags")
 
-# 链接参数
-set(LINK_FLAGS "${ARCH_FLAGS} -T \"${LINKER_SCRIPT}\" -nostartfiles -Xlinker --gc-sections -Xlinker --print-memory-usage --param=highcode-gen-section-name=1 -Wl,-Map=${PROJECT_NAME}.map --specs=nano.specs --specs=nosys.specs")
+# 链接标志：必须在链接的最末尾同样带上 ${OPTIMIZATION_FLAGS} 触发链接期全代码去虚化
+set(LINK_FLAGS "${ARCH_FLAGS} -T \"${LINKER_SCRIPT}\" -nostartfiles -Xlinker --gc-sections -Xlinker --print-memory-usage --param=highcode-gen-section-name=1 -Wl,-Map=${PROJECT_NAME}.map --specs=nano.specs --specs=nosys.specs ${OPTIMIZATION_FLAGS}")
 set(CMAKE_EXE_LINKER_FLAGS "${LINK_FLAGS}" CACHE INTERNAL "exe linker flags")
 
 # =========================================================================
-# 5. 收集源文件
+# 5. 源文件搜寻
 # =========================================================================
 file(GLOB_RECURSE SRC_APP          "${CMAKE_CURRENT_SOURCE_DIR}/APP/*.c")
 file(GLOB_RECURSE SRC_PROFILE      "${CMAKE_CURRENT_SOURCE_DIR}/Profile/*.c")
 file(GLOB_RECURSE SRC_HAL          "${CMAKE_CURRENT_SOURCE_DIR}/HAL/*.c")
 file(GLOB_RECURSE SRC_DRIVER       "${CMAKE_CURRENT_SOURCE_DIR}/StdPeriphDriver/*.c")
 file(GLOB_RECURSE SRC_STARTUP      "${CMAKE_CURRENT_SOURCE_DIR}/Startup/*.S" "${CMAKE_CURRENT_SOURCE_DIR}/Startup/*.s")
-
-# 仅仅抓取可能直接放在项目根目录下的 .c 文件
 file(GLOB SRC_ROOT                 "${CMAKE_CURRENT_SOURCE_DIR}/*.c")
 
 set(PROJECT_SOURCES
@@ -89,12 +88,13 @@ set(PROJECT_SOURCES
         dataCollectTask.h
         dataRxTask.c
         dataRxTask.h
+        misc.c
 )
 
 add_executable(${PROJECT_NAME} ${PROJECT_SOURCES})
 
 # =========================================================================
-# 6. 头文件包含路径
+# 6. 头文件依赖包含
 # =========================================================================
 target_include_directories(${PROJECT_NAME} PRIVATE
         "${CMAKE_CURRENT_SOURCE_DIR}"
@@ -109,7 +109,7 @@ target_include_directories(${PROJECT_NAME} PRIVATE
 )
 
 # =========================================================================
-# 7. 链接本地静态库
+# 7. 外部静态库引入
 # =========================================================================
 file(GLOB_RECURSE ALL_LIB_FILES "${CMAKE_CURRENT_SOURCE_DIR}/*.a")
 
@@ -124,24 +124,27 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
 )
 
 # =========================================================================
-# 8. 后处理：自动生成 HEX、LST 并打印内存（【修正】给 sh -c 内部的命令加上了硬核防碎转义双引号）
+# 8. 后处理命令 (生成 HEX/LST/ASM 文件并查看内存)
 # =========================================================================
 add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-        # 1. 生成 hex 文件
+        # 1. 生成烧录用 hex 文件
         COMMAND ${CMAKE_OBJCOPY} -O ihex $<TARGET_FILE:${PROJECT_NAME}> ${PROJECT_NAME}.hex
 
-        # 2. 生成 lst 文件
+        # 2. 生成标准的 C/汇编 交错文本文件 (.lst)
         COMMAND sh -c "\"${CMAKE_OBJDUMP}\" --source --all-headers --demangle -M xw --line-numbers --wide \"$<TARGET_FILE:${PROJECT_NAME}>\" > \"${PROJECT_NAME}.lst\""
 
-        # 3. 显示内存大小
+        # 3. 生成你要看的纯反汇编文件 (.asm)，并完美适配 WCH 扩展指令集汇编器 (-M xw)
+        COMMAND sh -c "\"${CMAKE_OBJDUMP}\" -S -d -M xw \"$<TARGET_FILE:${PROJECT_NAME}>\" > \"${PROJECT_NAME}.asm\""
+
+        # 4. 打印 Berkeley 格式的最终固件尺寸，当场看 LTO 瘦身效果
         COMMAND ${CMAKE_SIZE} --format=berkeley $<TARGET_FILE:${PROJECT_NAME}>
 
-        # 4. 拷贝 elf 文件到源码目录 (如果确实需要的话)
+        # 5. 备份 ELF 到源码根目录
         COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:${PROJECT_NAME}> "${CMAKE_CURRENT_SOURCE_DIR}/${PROJECT_NAME}.elf"
 
-        # 5. 运行 eanaly 并明确指定传入当前生成的 ELF 文件路径
+        # 6. 运行 eanaly 内存足迹分析（如果可用）
         COMMAND ${EANALY_EXE} $<TARGET_FILE:${PROJECT_NAME}>
 
         WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-        COMMENT "Generating HEX/LST files, displaying memory usage, and running eanaly..."
+        COMMENT "Generating HEX/LST/ASM files, displaying memory usage, and running LTO post-analysis..."
 )

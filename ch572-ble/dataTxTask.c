@@ -27,6 +27,7 @@ static void dataTxTask_notifyChar4(uint8_t *payload, uint8_t payloadLen)
     uint8_t sendLen;
 
     sendLen = payloadLen;
+
     if(sendLen > SIMPLEPROFILE_CHAR4_LEN)
     {
         sendLen = SIMPLEPROFILE_CHAR4_LEN;

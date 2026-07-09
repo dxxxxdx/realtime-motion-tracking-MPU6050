@@ -392,7 +392,7 @@ void mDelaymS(uint16_t t)
 }
 
 #ifdef DEBUG
-int _write(int fd, char *buf, int size)
+__attribute__((used)) int _write(int fd, char *buf, int size)
 {
     int i;
     for(i = 0; i < size; i++)
