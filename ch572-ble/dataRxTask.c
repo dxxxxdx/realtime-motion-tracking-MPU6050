@@ -4,7 +4,7 @@
 #include "gattprofile.h"
 
 #define MS_TO_TICKS(ms)    ((ms) * 8 / 5)
-
+#include "MPU6050.h"
 uint8_t g_dataRxPayload[DATARX_PACKET_LEN];
 
 dataRxTask g_dataRxTask = {
@@ -112,10 +112,40 @@ uint16_t dataRxTask_ProcessEvent(uint8_t task_id, uint16_t events)
 
     return 0;
 }
+static uint8_t test[8] = {0};
 void onReceive(dataRxTask *self)
 {
-    uint8_t test = self->packetCount;
+    uint8_t error = 0;
+    if (self->payload[0] == 0xAA){   //写寄存器
+         error = MPU6050_Write_Data(&g_mpu,self->payload[1], self->payload+2, self->payload[7]);
+        //别写太长，一个一个写
+        //记得填满数据否则踩坏其他寄存器
+
+    }else if (self->payload[0] == 0x55){
+        //TODO 我觉得没必要读其他寄存器
+        (void)self;
+
+
+    }else{
+
+    }
+    test[7] = error;
+    test[0] = self->packetCount;
+    //TODO 上位机自己提需求往这里加，怎么回复自己写,校验自己写
     SimpleProfile_SetParameter(self->echoBackGattCharID, SIMPLEPROFILE_CHAR2_LEN, &test );
-    //TODO  给这个玩意整长一点不然全是栈上的垃圾字节     //写iic的那个也做一下
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 }

@@ -23,6 +23,7 @@ typedef struct dataRxTask
     uint8_t            echoBackGattCharID;
     uint8_t            payloadLen;
     void   (*onReceive)(struct dataRxTask* self);
+
 } dataRxTask;
 
 extern dataRxTask g_dataRxTask;

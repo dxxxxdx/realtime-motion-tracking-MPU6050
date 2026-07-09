@@ -51,7 +51,7 @@ static void MPU6050Packet_fill(MPU6050Packet *packet, ACCELERATION_DATA_t *data,
 
 static MPU6050_RET MPU6050tick(dataCollectTask *self)
 {
-    ACCELERATION_DATA_t data;
+    static ACCELERATION_DATA_t data;
 
     if(MPU6050_Read_Data(self->sensor, &data) != MPU6050_OK)
     {
